@@ -7,7 +7,7 @@ schedule_path = 'data/NBA_Schedule.csv'
 
 # Load the data
 nba_logs_df = pd.read_csv(nba_logs_path)
-schedule_df = pd.read_csv(schedule_path, parse_dates=['Date'], dayfirst=False)
+schedule_df = pd.read_csv(schedule_path, parse_dates=['DATE'], dayfirst=False)
 
 # Title of the app
 st.title("NBA Data Viewer")
