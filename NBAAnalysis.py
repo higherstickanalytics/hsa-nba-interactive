@@ -15,24 +15,27 @@ schedule_df = pd.read_csv(schedule_path, parse_dates=['DATE'], dayfirst=False)
 st.title("NBA Data Viewer with Pie and Time-Series Charts")
 st.write("Data from [Basketball Reference](https://www.basketball-reference.com/)")
 
-# Define stat mappings
+# Define stat mappings (based on your columns)
 stat_map = {
     'Points': 'PTS',
     'Assists': 'AST',
-    'Rebounds': 'REB',
+    'Rebounds': 'TRB',
     'Steals': 'STL',
     'Blocks': 'BLK',
     'Turnovers': 'TOV',
-    'Field Goal %': 'FG%',
-    'Three Point %': '3P%',
-    'Free Throw %': 'FT%'
+    'Field Goals Made': 'FG',
+    'Field Goal Attempts': 'FGA',
+    'Three-Pointers Made': '3P',
+    'Free Throws Made': 'FT',
+    'Personal Fouls': 'PF',
+    'Minutes Played': 'MP'
 }
 
 # Convert date column
 nba_logs_df['Date'] = pd.to_datetime(nba_logs_df['Date'], errors='coerce')
 nba_logs_df = nba_logs_df.dropna(subset=['Date'])
 
-# Sidebar stat selection
+# Sidebar: select stat
 stat_options = list(stat_map.keys())
 selected_stat_display = st.sidebar.selectbox("Select a statistic:", stat_options)
 selected_stat = stat_map[selected_stat_display]
@@ -41,7 +44,7 @@ selected_stat = stat_map[selected_stat_display]
 player_list = nba_logs_df['Player'].dropna().unique().tolist()
 selected_player = st.sidebar.selectbox("Select a player:", sorted(player_list))
 
-# Date range
+# Date range selection
 min_date = nba_logs_df['Date'].min()
 max_date = nba_logs_df['Date'].max()
 start_date = pd.to_datetime(st.sidebar.date_input("Start Date", min_value=min_date, value=min_date))
