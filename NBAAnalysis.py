@@ -27,8 +27,7 @@ stat_map = {
     'Field Goal Attempts': 'FGA',
     'Three-Pointers Made': '3P',
     'Free Throws Made': 'FT',
-    'Personal Fouls': 'PF',
-    'Minutes Played': 'MP'
+    'Personal Fouls': 'PF'
 }
 
 # Convert date column
