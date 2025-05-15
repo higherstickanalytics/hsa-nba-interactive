@@ -8,7 +8,7 @@ import os
 nba_logs_path = 'data/basketball_data/combined_nba_game_logs.csv'
 schedule_path = 'data/NBA_Schedule.csv'
 
-# Load data with error checks
+# Check if files exist
 if not os.path.exists(nba_logs_path):
     st.error(f"NBA logs file not found at {nba_logs_path}")
     st.stop()
@@ -17,57 +17,54 @@ if not os.path.exists(schedule_path):
     st.error(f"Schedule file not found at {schedule_path}")
     st.stop()
 
+# Load data
 nba_logs_df = pd.read_csv(nba_logs_path)
 schedule_df = pd.read_csv(schedule_path, parse_dates=['DATE'], dayfirst=False)
 
 # Strip whitespace from columns
 nba_logs_df.columns = nba_logs_df.columns.str.strip()
 
-# Rename date column if needed and convert to datetime
-if 'GAME_DATE' in nba_logs_df.columns:
-    nba_logs_df.rename(columns={'GAME_DATE': 'Date'}, inplace=True)
+# Rename columns to standard names used in app
+nba_logs_df.rename(columns={'GAME_DATE': 'Date', 'Player_Name': 'Player'}, inplace=True)
 
-if 'Date' not in nba_logs_df.columns:
-    st.error("No 'Date' or 'GAME_DATE' column found in NBA logs data.")
-    st.stop()
-
+# Convert 'Date' to datetime and drop rows with invalid dates
 nba_logs_df['Date'] = pd.to_datetime(nba_logs_df['Date'], errors='coerce')
 nba_logs_df = nba_logs_df.dropna(subset=['Date'])
 
-# Check Player column presence
+# Check if essential columns exist
 if 'Player' not in nba_logs_df.columns:
     st.error("No 'Player' column found in NBA logs data.")
     st.stop()
 
-# App title
+# App title and info
 st.title("NBA Data Viewer with Pie and Time-Series Charts")
 st.write("Data from [Basketball Reference](https://www.basketball-reference.com/)")
 
-# Stat mappings (ensure keys match your actual columns)
+# Stat mappings - adjust keys if your CSV column names differ
 stat_map = {
     'Points': 'PTS',
     'Assists': 'AST',
-    'Rebounds': 'TRB',  # Ensure your CSV has 'TRB' for total rebounds, else 'REB' or 'DREB' + 'OREB'
+    'Rebounds': 'REB',  # Your dataset has REB, not TRB
     'Steals': 'STL',
     'Blocks': 'BLK',
     'Turnovers': 'TOV',
-    'Field Goals Made': 'FG',
+    'Field Goals Made': 'FGM',
     'Field Goal Attempts': 'FGA',
-    'Three-Pointers Made': '3P',
-    'Free Throws Made': 'FT',
+    'Three-Pointers Made': 'FG3M',  # Your dataset uses FG3M for 3P made
+    'Free Throws Made': 'FTM',
     'Personal Fouls': 'PF'
 }
 
-# Sidebar: select stat
+# Sidebar: select statistic
 stat_options = list(stat_map.keys())
 selected_stat_display = st.sidebar.selectbox("Select a statistic:", stat_options)
 selected_stat = stat_map[selected_stat_display]
 
-# Sidebar: player selection
+# Sidebar: select player
 player_list = nba_logs_df['Player'].dropna().unique().tolist()
 selected_player = st.sidebar.selectbox("Select a player:", sorted(player_list))
 
-# Date range selection with valid min/max dates
+# Date range selection
 min_date = nba_logs_df['Date'].min()
 max_date = nba_logs_df['Date'].max()
 
@@ -78,15 +75,15 @@ if start_date > end_date:
     st.error("Start Date must be before or equal to End Date.")
     st.stop()
 
-# Filter data by date and player
+# Filter data for player and date range
 filtered_df = nba_logs_df[(nba_logs_df['Date'] >= pd.to_datetime(start_date)) & (nba_logs_df['Date'] <= pd.to_datetime(end_date))]
 player_df = filtered_df[filtered_df['Player'] == selected_player].copy()
 
-# Convert selected_stat column to numeric, drop NaNs
+# Convert selected stat column to numeric and drop missing
 player_df[selected_stat] = pd.to_numeric(player_df[selected_stat], errors='coerce')
 player_df = player_df.dropna(subset=[selected_stat])
 
-# Set threshold slider defaults and limits
+# Threshold slider settings
 max_val = player_df[selected_stat].max() if not player_df.empty else 100.0
 default_thresh = player_df[selected_stat].median() if not player_df.empty else 0.0
 
@@ -98,7 +95,7 @@ threshold = st.sidebar.number_input(
     step=0.5
 )
 
-# Pie chart section
+# Pie Chart
 st.subheader(f"{selected_stat_display} Distribution for {selected_player}")
 
 stat_counts = player_df[selected_stat].value_counts().sort_index()
@@ -152,7 +149,7 @@ else:
     })
     st.table(breakdown_df)
 
-# Time-series chart
+# Time-series plot
 st.subheader(f"{selected_stat_display} Over Time for {selected_player}")
 
 fig2, ax2 = plt.subplots(figsize=(12, 6))
